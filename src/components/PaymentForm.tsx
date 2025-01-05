@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { DatePicker } from "./DatePicker";
 import { useAppContext } from "@/context/AppContext";
 import { PlusCircle, X } from "lucide-react";
-import { hasMoreThan10Records } from "@/services/supabaseService"; // Import as named export
+// import { hasMoreThan10Records } from "@/services/supabaseService"; // Import as named export
 import { ClientChip } from "./ClientChip";
 
 export function PaymentForm() {
@@ -25,16 +25,16 @@ export function PaymentForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Check if the user is on the free plan and has 10 or more payments
-    if (user?.plan === "free") {
-      const hasExceededLimit = await hasMoreThan10Records("payments", user.id);
-      if (hasExceededLimit) {
-        setError(
-          "You have exceeded the maximum number of payments on the free plan. Upgrade to add more."
-        );
-        return;
-      }
-    }
+    // // Check if the user is on the free plan and has 10 or more payments
+    // if (user?.plan === "free") {
+    //   const hasExceededLimit = await hasMoreThan10Records("payments", user.id);
+    //   if (hasExceededLimit) {
+    //     setError(
+    //       "You have exceeded the maximum number of payments on the free plan. Upgrade to add more."
+    //     );
+    //     return;
+    //   }
+    // }
 
     // Proceed to add the payment
     if (selectedClientId && amount && date) {
