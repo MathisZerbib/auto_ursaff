@@ -10,7 +10,7 @@ import { DatePicker } from "./DatePicker";
 import { useAppContext } from "@/context/AppContext";
 import { PlusCircle, X } from "lucide-react";
 import { ClientChip } from "./ClientChip";
-import hasMoreThan10Records from "@/services/supabaseService";
+import { hasMoreThan10Records } from "@/services/supabaseService"; // Import as named export
 
 export function PaymentForm() {
   const [amount, setAmount] = useState("");
