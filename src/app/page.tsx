@@ -12,6 +12,8 @@ import {
 import Link from "next/link";
 import Footer from "@/components/Footer";
 import TestimonialCard from "@/components/TestimonialCard";
+import StripeCheckout from "@/components/StripeCheckout";
+import { useAuth } from "@/hooks/auth"; // Import the useAuth hook
 
 // Testimonial data
 const testimonials = [
@@ -45,7 +47,40 @@ const testimonials = [
   },
 ];
 
+interface PricingPlan {
+  name: string;
+  price: string;
+  features: string[];
+  priceId?: string;
+  isFreeTier?: boolean;
+}
+
 export default function Home() {
+  const { user } = useAuth();
+
+  const pricingPlans: PricingPlan[] = [
+    {
+      name: "Gratuit",
+      price: "0€",
+      features: [
+        "Jusqu'à 10 déclarations/an",
+        "Calcul des cotisations",
+        "Rappels basiques",
+      ],
+      isFreeTier: true,
+    },
+    {
+      name: "Pro",
+      price: "9,99€/mois",
+      features: [
+        "Déclarations illimitées",
+        "Tableaux de bord avancés",
+        "Support prioritaire",
+      ],
+      priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID!,
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-white text-black mt-8">
       {/* Hero Section */}
@@ -124,26 +159,7 @@ export default function Home() {
           Tarifs simples et transparents
         </h2>
         <div className="flex flex-wrap justify-center gap-8">
-          {[
-            {
-              name: "Gratuit",
-              price: "0€",
-              features: [
-                "Jusqu'à 10 déclarations/an",
-                "Calcul des cotisations",
-                "Rappels basiques",
-              ],
-            },
-            {
-              name: "Pro",
-              price: "9,99€/mois",
-              features: [
-                "Déclarations illimitées",
-                "Tableaux de bord avancés",
-                "Support prioritaire",
-              ],
-            },
-          ].map((plan, index) => (
+          {pricingPlans.map((plan, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, scale: 0.5 }}
@@ -162,7 +178,16 @@ export default function Home() {
                   </li>
                 ))}
               </ul>
-              <SolidButton className="w-full">Choisir ce plan</SolidButton>
+              {plan.priceId ? (
+                <StripeCheckout
+                  priceId={plan.priceId}
+                  isFreeTier={plan.isFreeTier}
+                />
+              ) : (
+                <SolidButton className="w-full">
+                  {user ? "Plan gratuit" : "Inscription gratuite"}
+                </SolidButton>
+              )}
             </motion.div>
           ))}
         </div>
