@@ -10,7 +10,7 @@ import { DatePicker } from "./DatePicker";
 import { useAppContext } from "@/context/AppContext";
 import { PlusCircle, X } from "lucide-react";
 import { ClientChip } from "./ClientChip";
-import { hasMoreThan10Records } from "@/services/supabaseService"; // Import as named export
+import { countUserRecords } from "@/services/supabaseService";
 
 export function PaymentForm() {
   const [amount, setAmount] = useState("");
@@ -21,6 +21,14 @@ export function PaymentForm() {
   const [error, setError] = useState<string | null>(null); // For displaying errors
   const router = useRouter();
   const { clients, addClient, addPayment, user } = useAppContext(); // Assume `user` contains the plan info
+
+  const hasMoreThan10Records = async (
+    tableName: string,
+    userId: string
+  ): Promise<boolean> => {
+    const recordCount = await countUserRecords(tableName, userId);
+    return recordCount > 10;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
