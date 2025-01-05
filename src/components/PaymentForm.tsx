@@ -20,7 +20,7 @@ export function PaymentForm() {
   const [isAddingNewClient, setIsAddingNewClient] = useState(false);
   const [error, setError] = useState<string | null>(null); // For displaying errors
   const router = useRouter();
-  const { clients, addClient, addPayment, user } = useAppContext(); // Assume `user` contains the plan info
+  const { clients, addClient, addPayment } = useAppContext(); // Assume `user` contains the plan info
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -168,7 +168,7 @@ export function PaymentForm() {
       <Button
         type="submit"
         className="w-full bg-black hover:bg-gray-800 text-white"
-        disabled={user?.plan === "free" && error !== null} // Disable button if on free plan and limit exceeded
+        // disabled={user?.plan === "free" && error !== null} // Disable button if on free plan and limit exceeded
       >
         Enregistrer
       </Button>
