@@ -10,6 +10,7 @@ import { DatePicker } from "./DatePicker";
 import { useAppContext } from "@/context/AppContext";
 import { PlusCircle, X } from "lucide-react";
 import { ClientChip } from "./ClientChip";
+import hasMoreThan10Records from "@/services/supabaseService";
 
 export function PaymentForm() {
   const [amount, setAmount] = useState("");
@@ -17,26 +18,56 @@ export function PaymentForm() {
   const [newClientName, setNewClientName] = useState("");
   const [date, setDate] = useState<Date>();
   const [isAddingNewClient, setIsAddingNewClient] = useState(false);
+  const [error, setError] = useState<string | null>(null); // For displaying errors
   const router = useRouter();
-  const { clients, addClient, addPayment } = useAppContext();
+  const { clients, addClient, addPayment, user } = useAppContext(); // Assume `user` contains the plan info
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Check if the user is on the free plan and has 10 or more payments
+    if (user?.plan === "free") {
+      const hasExceededLimit = await hasMoreThan10Records("payments", user.id);
+      if (hasExceededLimit) {
+        setError(
+          "You have exceeded the maximum number of payments on the free plan. Upgrade to add more."
+        );
+        return;
+      }
+    }
+
+    // Proceed to add the payment
     if (selectedClientId && amount && date) {
-      await addPayment(
-        selectedClientId,
-        parseFloat(amount),
-        date.toISOString()
-      );
-      router.push("/dashboard");
+      try {
+        await addPayment(
+          selectedClientId,
+          parseFloat(amount),
+          date.toISOString()
+        );
+        router.push("/dashboard");
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "An error occurred while adding the payment."
+        );
+      }
     }
   };
 
   const handleAddNewClient = async () => {
     if (newClientName) {
-      await addClient(newClientName);
-      setNewClientName("");
-      setIsAddingNewClient(false);
+      try {
+        await addClient(newClientName);
+        setNewClientName("");
+        setIsAddingNewClient(false);
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "An error occurred while adding the client."
+        );
+      }
     }
   };
 
@@ -48,6 +79,13 @@ export function PaymentForm() {
       onSubmit={handleSubmit}
       className="space-y-6 bg-gray-100 p-6 rounded-lg shadow-lg border border-gray-300"
     >
+      {/* Display error message if any */}
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+          {error}
+        </div>
+      )}
+
       <div className="space-y-2">
         <Label htmlFor="client" className="text-black">
           Client
@@ -130,6 +168,7 @@ export function PaymentForm() {
       <Button
         type="submit"
         className="w-full bg-black hover:bg-gray-800 text-white"
+        disabled={user?.plan === "free" && error !== null} // Disable button if on free plan and limit exceeded
       >
         Enregistrer
       </Button>

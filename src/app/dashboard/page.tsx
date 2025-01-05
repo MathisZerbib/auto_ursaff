@@ -1,8 +1,8 @@
+// components/Dashboard.tsx
 "use client";
 
-import { useAppContext } from "@/context/AppContext";
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useAppContext } from "@/context/AppContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Bar,
@@ -13,7 +13,6 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
-import { SolidButton } from "@/components/SolidButton";
 import { format, parse, startOfYear, endOfYear } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Trash2 } from "lucide-react";
@@ -31,7 +30,11 @@ export default function Dashboard() {
     useAppContext();
   const [yearFilter, setYearFilter] = useState<string>("all");
   const [filteredPayments, setFilteredPayments] = useState(payments);
+  const [cotisations, setCotisations] = useState<number | null>(null);
+  const [revenuNet, setRevenuNet] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
+  // Filter payments by year
   useEffect(() => {
     if (yearFilter === "all") {
       setFilteredPayments(payments);
@@ -48,6 +51,7 @@ export default function Dashboard() {
     }
   }, [yearFilter, payments]);
 
+  // Calculate metrics
   const totalRevenue = filteredPayments.reduce(
     (sum, payment) => sum + payment.amount,
     0
@@ -57,6 +61,47 @@ export default function Dashboard() {
     .filter((p) => p.declared)
     .reduce((sum, payment) => sum + payment.amount, 0);
 
+  // Call API to calculate cotisations and revenuNet
+  useEffect(() => {
+    const calculateAutoEntrepreneur = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch("/api/calculateAutoEntrepreneur", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ declaredRevenue }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Échec du calcul des cotisations et du revenu net");
+        }
+
+        const data = await response.json();
+        setCotisations(data.cotisations);
+        setRevenuNet(data.revenuNet);
+      } catch (error) {
+        console.error(
+          "Erreur lors du calcul des cotisations et du revenu net :",
+          error
+        );
+        setCotisations(null);
+        setRevenuNet(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (declaredRevenue > 0) {
+      calculateAutoEntrepreneur();
+    } else {
+      setCotisations(null);
+      setRevenuNet(null);
+    }
+  }, [declaredRevenue]);
+
+  // Prepare data for the chart
   const paymentsByMonth = filteredPayments.reduce((acc, payment) => {
     const date = new Date(payment.date);
     const monthYear = format(date, "MM/yyyy");
@@ -72,6 +117,7 @@ export default function Dashboard() {
     )
     .map(([month, amount]) => ({ month, amount }));
 
+  // Extract available years
   const years = Array.from(
     new Set(payments.map((payment) => new Date(payment.date).getFullYear()))
   ).sort((a, b) => b - a);
@@ -80,69 +126,89 @@ export default function Dashboard() {
     <div className="container mx-auto px-4 py-8 bg-white text-black">
       <Navigation />
       <div className="h-24" />
-      <motion.h1
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-4xl font-bold mb-8 text-center text-black"
-      >
+      <h1 className="text-4xl font-bold mb-8 text-center text-black">
         Tableau de bord
-      </motion.h1>
+      </h1>
+
+      {/* Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <Card className="bg-gray-100 border border-gray-300">
-            <CardHeader>
-              <CardTitle className="text-black">Revenus totaux</CardTitle>
-            </CardHeader>
-            <CardContent>
+        {/* Total Revenue */}
+        <Card className="bg-gray-100 border border-gray-300">
+          <CardHeader>
+            <CardTitle className="text-black">Revenus totaux</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-black">
+              {totalRevenue.toFixed(2)} €
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Average Payment */}
+        <Card className="bg-gray-100 border border-gray-300">
+          <CardHeader>
+            <CardTitle className="text-black">Paiement moyen</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-black">
+              {averagePayment.toFixed(2)} €
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Declared Revenue */}
+        <Card className="bg-gray-100 border border-gray-300">
+          <CardHeader>
+            <CardTitle className="text-black">Revenus déclarés</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-black">
+              {declaredRevenue.toFixed(2)} €
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Social Contributions */}
+        <Card className="bg-gray-100 border border-gray-300">
+          <CardHeader>
+            <CardTitle className="text-black">Cotisations sociales</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <p className="text-3xl font-bold text-black">Chargement...</p>
+            ) : (
               <p className="text-3xl font-bold text-black">
-                {totalRevenue.toFixed(2)} €
+                {cotisations && cotisations !== null
+                  ? `${cotisations.toFixed(2)} €`
+                  : "N/A"}
               </p>
-            </CardContent>
-          </Card>
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          <Card className="bg-gray-100 border border-gray-300">
-            <CardHeader>
-              <CardTitle className="text-black">Paiement moyen</CardTitle>
-            </CardHeader>
-            <CardContent>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Net Income After Contributions */}
+        <Card className="bg-gray-100 border border-gray-300">
+          <CardHeader>
+            <CardTitle className="text-black">
+              Revenu net après cotisations
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <p className="text-3xl font-bold text-black">Chargement...</p>
+            ) : (
               <p className="text-3xl font-bold text-black">
-                {averagePayment.toFixed(2)} €
+                {revenuNet && revenuNet !== null
+                  ? `${revenuNet.toFixed(2)} €`
+                  : "N/A"}
               </p>
-            </CardContent>
-          </Card>
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-          <Card className="bg-gray-100 border border-gray-300">
-            <CardHeader>
-              <CardTitle className="text-black">Revenus déclarés</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-black">
-                {declaredRevenue.toFixed(2)} €
-              </p>
-            </CardContent>
-          </Card>
-        </motion.div>
+            )}
+          </CardContent>
+        </Card>
       </div>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="bg-gray-100 p-6 rounded-lg shadow-lg border border-gray-300 mb-8"
-      >
+
+      {/* Revenue by Month Chart */}
+      <div className="bg-gray-100 p-6 rounded-lg shadow-lg border border-gray-300 mb-8">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold text-black">Revenus par mois</h2>
           <Select onValueChange={setYearFilter} value={yearFilter}>
@@ -173,13 +239,10 @@ export default function Dashboard() {
             <Bar dataKey="amount" fill="url(#colorUv)" />
           </BarChart>
         </ResponsiveContainer>
-      </motion.div>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-        className="bg-gray-100 p-6 rounded-lg shadow-lg border border-gray-300"
-      >
+      </div>
+
+      {/* Payments List */}
+      <div className="bg-gray-100 p-6 rounded-lg shadow-lg border border-gray-300">
         <h2 className="text-2xl font-bold mb-4 text-black">
           Liste des paiements
         </h2>
@@ -221,24 +284,24 @@ export default function Dashboard() {
                     </td>
                     <td className="py-2 px-4">
                       <div className="flex space-x-2">
-                        <SolidButton
+                        <button
                           onClick={() => togglePaymentDeclared(payment.id)}
-                          className={`text-xs ${
+                          className={`px-4 py-2 text-xs rounded ${
                             payment.declared
                               ? "bg-yellow-500 hover:bg-yellow-600"
                               : "bg-green-500 hover:bg-green-600"
-                          }`}
+                          } text-white`}
                         >
                           {payment.declared
                             ? "Annuler déclaration"
                             : "Marquer comme déclaré"}
-                        </SolidButton>
-                        <SolidButton
+                        </button>
+                        <button
                           onClick={() => deletePayment(payment.id)}
-                          className="text-xs bg-red-500 hover:bg-red-600"
+                          className="px-4 py-2 text-xs bg-red-500 hover:bg-red-600 text-white rounded"
                         >
                           <Trash2 className="h-4 w-4" />
-                        </SolidButton>
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -247,7 +310,7 @@ export default function Dashboard() {
             </tbody>
           </table>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }
