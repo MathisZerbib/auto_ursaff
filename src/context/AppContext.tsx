@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { Session } from "@supabase/supabase-js";
+import { Session, User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation"; // Import useRouter
 import { createClient } from "@/utils/supabase/client";
 import {
@@ -32,6 +32,7 @@ interface AppContextType {
   clients: Client[];
   payments: Payment[];
   session: Session | null;
+  user: User | null; // Add user property
   addClient: (name: string) => Promise<void>;
   updateClient: (clientId: string, name: string) => Promise<void>;
   deleteClient: (clientId: string) => Promise<void>;
@@ -51,6 +52,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   const [clients, setClients] = useState<Client[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null); // Add user state
   const router = useRouter(); // Initialize useRouter
 
   useEffect(() => {
@@ -59,6 +61,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         data: { session },
       } = await supabase.auth.getSession();
       setSession(session);
+      setUser(session?.user ?? null); // Set user state
 
       if (session) {
         await fetchClients(session.user.id);
@@ -68,6 +71,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
       const { data: authListener } = supabase.auth.onAuthStateChange(
         (_event, session) => {
           setSession(session);
+          setUser(session?.user ?? null); // Set user state
           if (session) {
             fetchClients(session.user.id);
             fetchPayments(session.user.id);
@@ -201,6 +205,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   const logout = async () => {
     await supabase.auth.signOut();
     setSession(null);
+    setUser(null); // Clear user state
     router.push("/"); // Redirect to home page
   };
 
@@ -216,6 +221,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         clients,
         payments,
         session,
+        user, // Provide user in context
         addClient,
         updateClient,
         deleteClient,
