@@ -6,7 +6,6 @@ import { createClient } from '@/utils/supabase/server'
 import { AuthError } from '@supabase/supabase-js'
 import { Provider } from '@supabase/supabase-js'
 
-
 function validateEmail(email: string): boolean {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     return re.test(email)
@@ -15,7 +14,7 @@ function validateEmail(email: string): boolean {
 function validatePassword(password: string): boolean {
     // Add your password validation logic here
     // For example, check for minimum length
-    return password.length >= 6
+    return password.length >= 8
 }
 
 async function handleAuthError(error: AuthError | null) {
@@ -29,7 +28,7 @@ async function handleAuthSuccess(data: { provider: Provider; url: string | null 
         redirect(data.url)
     } else {
         revalidatePath('/', 'layout')
-        redirect('/')
+        redirect('/dashboard')
     }
 }
 
@@ -49,7 +48,7 @@ export async function signup(formData: FormData) {
 
     const { error } = await supabase.auth.signUp({ email, password })
     await handleAuthError(error)
-    await handleAuthSuccess(null)
+    redirect('/confirmation')
 }
 
 async function signInWithProvider(provider: Provider) {

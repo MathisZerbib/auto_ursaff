@@ -4,6 +4,14 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { Session } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation"; // Import useRouter
 import { createClient } from "@/utils/supabase/client";
+import {
+  fetchClients as fetchClientsService,
+  fetchPayments as fetchPaymentsService,
+  addClient as addClientService,
+  addPayment as addPaymentService,
+  togglePaymentDeclared as togglePaymentDeclaredService,
+  deletePayment as deletePaymentService,
+} from "@/services/supabaseService";
 
 const supabase = createClient();
 
@@ -47,16 +55,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     const initialize = async () => {
-      await fetchClients();
-      await fetchPayments();
       const {
         data: { session },
       } = await supabase.auth.getSession();
       setSession(session);
 
+      if (session) {
+        await fetchClients(session.user.id);
+        await fetchPayments(session.user.id);
+      }
+
       const { data: authListener } = supabase.auth.onAuthStateChange(
         (_event, session) => {
           setSession(session);
+          if (session) {
+            fetchClients(session.user.id);
+            fetchPayments(session.user.id);
+          }
         }
       );
 
@@ -68,20 +83,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     initialize();
   }, []);
 
-  async function fetchClients() {
-    const { data, error } = await supabase.from("clients").select("*");
-    if (error) {
-      console.error("Error fetching clients:", error);
-    } else {
+  async function fetchClients(userId: string) {
+    try {
+      const data = await fetchClientsService(userId);
       setClients(data);
+    } catch (error) {
+      console.error("Error fetching clients:", error);
     }
   }
 
-  async function fetchPayments() {
-    const { data, error } = await supabase.from("payments").select("*");
-    if (error) {
-      console.error("Error fetching payments:", error);
-    } else {
+  async function fetchPayments(userId: string) {
+    try {
+      const data = await fetchPaymentsService(userId);
       setPayments(
         data.map((payment) => ({
           ...payment,
@@ -89,20 +102,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
           date: payment.date,
         }))
       );
+    } catch (error) {
+      console.error("Error fetching payments:", error);
     }
   }
 
   const addClient = async (name: string) => {
-    const { data, error } = await supabase
-      .from("clients")
-      .insert({ name })
-      .select();
-    if (error) {
-      console.error("Error adding client:", error);
-    } else if (data) {
-      setClients((prev) => [...prev, data[0]]);
+    if (session) {
+      try {
+        const client = await addClientService(session.user.id, name);
+        setClients((prev) => [...prev, client]);
+      } catch (error) {
+        console.error("Error adding client:", error);
+      }
     }
   };
+
   const updateClient = async (clientId: string, name: string) => {
     const { data, error } = await supabase
       .from("clients")
@@ -131,60 +146,61 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const addPayment = async (clientId: string, amount: number, date: string) => {
-    const { data, error } = await supabase
-      .from("payments")
-      .insert({ client_id: clientId, amount, date })
-      .select();
-    if (error) {
-      console.error("Error adding payment:", error);
-    } else if (data) {
-      setPayments((prev) => [
-        ...prev,
-        {
-          ...data[0],
-          clientId: data[0].client_id,
-          date: data[0].date,
-        },
-      ]);
+    if (session) {
+      try {
+        const payment = await addPaymentService(
+          session.user.id,
+          clientId,
+          amount,
+          date
+        );
+        setPayments((prev) => [
+          ...prev,
+          {
+            ...payment,
+            clientId: payment.client_id,
+            date: payment.date,
+          },
+        ]);
+      } catch (error) {
+        console.error("Error adding payment:", error);
+      }
     }
   };
 
   const togglePaymentDeclared = async (paymentId: string) => {
-    const payment = payments.find((p) => p.id === paymentId);
-    if (!payment) return;
-
-    const { data, error } = await supabase
-      .from("payments")
-      .update({ declared: !payment.declared })
-      .eq("id", paymentId)
-      .select();
-
-    if (error) {
-      console.error("Error updating payment:", error);
-    } else if (data) {
-      setPayments((prev) =>
-        prev.map((p) =>
-          p.id === paymentId ? { ...p, declared: !p.declared } : p
-        )
-      );
+    if (session) {
+      try {
+        await togglePaymentDeclaredService(
+          session.user.id,
+          paymentId,
+          !payments.find((p) => p.id === paymentId)?.declared
+        );
+        setPayments((prev) =>
+          prev.map((p) =>
+            p.id === paymentId ? { ...p, declared: !p.declared } : p
+          )
+        );
+      } catch (error) {
+        console.error("Error updating payment:", error);
+      }
     }
   };
 
   const deletePayment = async (paymentId: string) => {
-    const { error } = await supabase
-      .from("payments")
-      .delete()
-      .eq("id", paymentId);
-
-    if (error) {
-      console.error("Error deleting payment:", error);
-    } else {
-      setPayments((prev) => prev.filter((p) => p.id !== paymentId));
+    if (session) {
+      try {
+        await deletePaymentService(session.user.id, paymentId);
+        setPayments((prev) => prev.filter((p) => p.id !== paymentId));
+      } catch (error) {
+        console.error("Error deleting payment:", error);
+      }
     }
   };
 
   const logout = async () => {
     await supabase.auth.signOut();
+    setSession(null);
     router.push("/"); // Redirect to home page
   };
 

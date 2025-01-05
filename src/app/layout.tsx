@@ -1,6 +1,5 @@
 import { Inter } from "next/font/google";
 import { AppProvider } from "@/context/AppContext";
-import { Navigation } from "@/components/Navigation";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -21,7 +20,6 @@ export default function RootLayout({
       <body className={`${inter.className} bg-white text-white`}>
         <AppProvider>
           <div className="flex flex-col min-h-screen">
-            <Navigation />
             <main className="flex-grow relative overflow-hidden">
               <div className="relative z-10">{children}</div>
             </main>
