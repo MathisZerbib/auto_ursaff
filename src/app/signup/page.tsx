@@ -166,7 +166,9 @@ export default function SignupPage() {
                 className="w-full text-gray-900"
               />
               {errors.email && (
-                <p className="text-red-500 text-sm">{errors.email.message}</p>
+                <p className="text-red-500 text-sm">
+                  {String(errors.email.message)}
+                </p>
               )}
             </div>
             <div className="space-y-2 relative">
@@ -209,6 +211,11 @@ export default function SignupPage() {
               <p className="text-sm text-gray-500 mt-1">
                 {getPasswordStrengthText(passwordStrength)}
               </p>
+              {errors.password && (
+                <p className="text-red-500 text-sm">
+                  {String(errors.password.message)}
+                </p>
+              )}
             </div>
             <div className="space-y-2 relative">
               <Label htmlFor="retype-password" className="text-gray-900">
@@ -235,7 +242,7 @@ export default function SignupPage() {
               </div>
               {errors.retypePassword && (
                 <p className="text-red-500 text-sm">
-                  {errors.retypePassword.message}
+                  {String(errors.retypePassword.message)}
                 </p>
               )}
             </div>
