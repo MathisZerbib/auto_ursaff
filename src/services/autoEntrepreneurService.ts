@@ -12,8 +12,9 @@ interface ApiRequestBody {
       situation: {
         "dirigeant . auto-entrepreneur . chiffre d'affaires": `${declaredRevenue} €/an`,
         'dirigeant . auto-entrepreneur . cotisations et contributions . cotisations': "oui",
-        "entreprise . activité . nature": "'libérale'",
-        "entreprise . activité . nature . libérale . réglementée": "non",
+        "entreprise . activité . nature": "'commerciale'",
+        'entreprise . activités . service ou vente': "oui",
+        'entreprise . activités . service ou vente . service': "oui",
         "entreprise . catégorie juridique": "'EI'",
         "entreprise . catégorie juridique . EI . auto-entrepreneur": "oui",
         "dirigeant . auto-entrepreneur . impôt . versement libératoire": "non",
