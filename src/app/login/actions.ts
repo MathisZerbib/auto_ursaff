@@ -2,64 +2,57 @@
 
 import { createClient } from '@/utils/supabase/server';
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
 import { Provider } from '@supabase/supabase-js';
 
-// Sign in with OAuth provider (Google, Facebook, Apple)
-export async function signInWithProvider(provider: Provider) {
+export async function signInWithProvider(provider: Provider): Promise<{ url?: string; error?: string }> {
   const supabase = await createClient();
 
-  // Initiate OAuth sign-in
+  const redirectUrl = process.env.VERCEL_URL 
+    ? `https://${process.env.VERCEL_URL}/dashboard`
+    : `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard`;
+
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
     options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard`,
+      redirectTo: redirectUrl,
     },
   });
 
-  // Handle errors
   if (error) {
     console.error(`Error signing in with ${provider}:`, error.message);
-    return { error: error.message }; // Return error message instead of redirecting
+    return { error: error.message };
   }
 
-  // Redirect to the provider's OAuth URL
   if (data?.url) {
-    return redirect(data.url); // Redirect to the provider's OAuth page
+    return { url: data.url };
   }
 
-  // Fallback redirect if something goes wrong
   revalidatePath('/', 'layout');
-  return redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/dashboard`);
+  return { url: redirectUrl };
 }
 
-// Wrapper functions to match the expected signature
-export async function handleGoogleSignIn() {
+export async function handleGoogleSignIn(): Promise<{ url?: string; error?: string }> {
   return await signInWithProvider('google');
 }
 
-export async function handleFacebookSignIn() {
+export async function handleFacebookSignIn(): Promise<{ url?: string; error?: string }> {
   return await signInWithProvider('facebook');
 }
 
-export async function handleAppleSignIn() {
+export async function handleAppleSignIn(): Promise<{ url?: string; error?: string }> {
   return await signInWithProvider('apple');
 }
 
-// Sign in with email and password
-export async function signInWithPassword(data: { email: string; password: string }) {
+export async function signInWithPassword(data: { email: string; password: string }): Promise<{ url?: string; error?: string }> {
   const supabase = await createClient();
 
-  // Attempt to sign in with email and password
   const { error } = await supabase.auth.signInWithPassword(data);
 
-  // Handle errors
   if (error) {
     console.error('Error signing in with password:', error.message);
-    return { error: error.message }; // Return error message instead of redirecting
+    return { error: error.message };
   }
 
-  // Revalidate cache and redirect to dashboard
   revalidatePath('/', 'layout');
-  return redirect('/dashboard');
+  return { url: '/dashboard' };
 }
