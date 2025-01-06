@@ -3,7 +3,7 @@ import Image from "next/image";
 
 interface SocialLoginButtonProps {
   provider: "google" | "facebook" | "apple";
-  action: () => Promise<void | { error: string }>; // Allow actions that return void or an error object
+  action: () => Promise<void | { error: string }>;
 }
 
 export function SocialLoginButton({
