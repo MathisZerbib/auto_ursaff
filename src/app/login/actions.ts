@@ -13,7 +13,7 @@ export async function signInWithProvider(provider: Provider) {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
     options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/auth/callback`, // Redirect to callback route
+      redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard`,
     },
   });
 
