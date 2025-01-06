@@ -26,18 +26,7 @@ export default function LoginPage() {
 
     const result = await signInWithPassword({ email, password });
     if (result?.error) {
-      setError(result.error);
-    } else if (result?.url) {
-      window.location.href = result.url;
-    }
-  };
-
-  const handleSocialSignIn = async (action: () => Promise<{ url?: string; error?: string }>) => {
-    const result = await action();
-    if (result.url) {
-      window.location.href = result.url;
-    } else if (result.error) {
-      setError(result.error);
+      setError(result.error); // Display error message in the UI
     }
   };
 
@@ -83,18 +72,9 @@ export default function LoginPage() {
           </div>
           {error && <p className="text-red-500 text-center">{error}</p>}
           <div className="space-y-4">
-            <SocialLoginButton 
-              provider="google" 
-              action={() => handleSocialSignIn(handleGoogleSignIn)}
-            />
-            <SocialLoginButton 
-              provider="facebook" 
-              action={() => handleSocialSignIn(handleFacebookSignIn)}
-            />
-            <SocialLoginButton 
-              provider="apple" 
-              action={() => handleSocialSignIn(handleAppleSignIn)}
-            />
+            <SocialLoginButton provider="google" action={handleGoogleSignIn} />
+            <SocialLoginButton provider="facebook" action={handleFacebookSignIn} />
+            <SocialLoginButton provider="apple" action={handleAppleSignIn} />
           </div>
           <div className="relative">
             <Separator />
