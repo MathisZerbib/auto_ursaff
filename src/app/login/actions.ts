@@ -37,3 +37,15 @@ export async function signInWithFacebook() {
 export async function signInWithApple() {
   await signInWithProvider('apple');
 }
+
+export async function signInWithPassword(data: { email: string; password: string }) {
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithPassword(data);
+
+  if (error) {
+    console.error('Error signing in with password:', error.message);
+  }
+
+  revalidatePath('/', 'layout');
+  return redirect('/dashboard');
+}
