@@ -25,7 +25,7 @@ export async function signInWithProvider(provider: Provider) {
 
   // Redirect to the provider's OAuth URL
   if (data?.url) {
-    return redirect(data.url); // Redirect to the provider's OAuth page
+    return redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/dashboard`,); // Redirect to the provider's OAuth page
   }
 
   // Fallback redirect if something goes wrong
