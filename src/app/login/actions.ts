@@ -33,18 +33,16 @@ export async function signInWithProvider(provider: Provider) {
   return redirect('/');
 }
 
-// Sign in with Google
-export async function signInWithGoogle() {
+// Wrapper functions to match the expected signature
+export async function handleGoogleSignIn() {
   return await signInWithProvider('google');
 }
 
-// Sign in with Facebook
-export async function signInWithFacebook() {
+export async function handleFacebookSignIn() {
   return await signInWithProvider('facebook');
 }
 
-// Sign in with Apple
-export async function signInWithApple() {
+export async function handleAppleSignIn() {
   return await signInWithProvider('apple');
 }
 

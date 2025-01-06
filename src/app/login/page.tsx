@@ -2,9 +2,9 @@
 
 import {
   signInWithPassword,
-  signInWithGoogle,
-  signInWithFacebook,
-  signInWithApple,
+  handleGoogleSignIn,
+  handleFacebookSignIn,
+  handleAppleSignIn,
 } from "@/app/login/actions";
 import Image from "next/image";
 import { SocialLoginButton } from "@/components/social-login-button";
@@ -13,8 +13,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { motion } from "framer-motion";
+import { useState } from "react";
 
 export default function LoginPage() {
+  const [error, setError] = useState<string | null>(null);
+
+  const handleEmailPasswordSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    const result = await signInWithPassword({ email, password });
+    if (result?.error) {
+      setError(result.error); // Display error message in the UI
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
       <motion.div
@@ -55,13 +70,11 @@ export default function LoginPage() {
               Sign in to your account to continue
             </p>
           </div>
+          {error && <p className="text-red-500 text-center">{error}</p>}
           <div className="space-y-4">
-            <SocialLoginButton provider="google" action={signInWithGoogle} />
-            <SocialLoginButton
-              provider="facebook"
-              action={signInWithFacebook}
-            />
-            <SocialLoginButton provider="apple" action={signInWithApple} />
+            <SocialLoginButton provider="google" action={handleGoogleSignIn} />
+            <SocialLoginButton provider="facebook" action={handleFacebookSignIn} />
+            <SocialLoginButton provider="apple" action={handleAppleSignIn} />
           </div>
           <div className="relative">
             <Separator />
@@ -69,16 +82,7 @@ export default function LoginPage() {
               Or continue with
             </span>
           </div>
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              const formData = new FormData(e.currentTarget);
-              const email = formData.get("email") as string;
-              const password = formData.get("password") as string;
-              await signInWithPassword({ email, password });
-            }}
-            className="space-y-6"
-          >
+          <form onSubmit={handleEmailPasswordSignIn} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-gray-900">
                 Email

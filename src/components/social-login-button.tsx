@@ -3,7 +3,7 @@ import Image from "next/image";
 
 interface SocialLoginButtonProps {
   provider: "google" | "facebook" | "apple";
-  action: (formData: FormData) => Promise<void>;
+  action: () => Promise<void | { error: string }>; // Allow actions that return void or an error object
 }
 
 export function SocialLoginButton({
@@ -37,21 +37,26 @@ export function SocialLoginButton({
   const { name, bgColor, textColor, hoverColor, iconPath } =
     providerInfo[provider];
 
+  const handleClick = async () => {
+    const result = await action();
+    if (result?.error) {
+      console.error(result.error); // Handle errors in the UI
+    }
+  };
+
   return (
-    <form action={action}>
-      <Button
-        type="submit"
-        className={`w-full ${bgColor} ${textColor} ${hoverColor} font-semibold py-2 px-4 rounded-lg flex items-center justify-center transition-colors duration-300`}
-      >
-        <Image
-          src={iconPath}
-          alt={`${name} Icon`}
-          width={24}
-          height={24}
-          className="mr-2"
-        />
-        Sign in with {name}
-      </Button>
-    </form>
+    <Button
+      onClick={handleClick}
+      className={`w-full ${bgColor} ${textColor} ${hoverColor} font-semibold py-2 px-4 rounded-lg flex items-center justify-center transition-colors duration-300`}
+    >
+      <Image
+        src={iconPath}
+        alt={`${name} Icon`}
+        width={24}
+        height={24}
+        className="mr-2"
+      />
+      Sign in with {name}
+    </Button>
   );
 }
