@@ -12,7 +12,7 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    
+
     // Call the service to calculate values
     const data = await calculateAutoEntrepreneur(declaredRevenue);
 
