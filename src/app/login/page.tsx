@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  login,
+  signInWithPassword,
   signInWithGoogle,
   signInWithFacebook,
   signInWithApple,
@@ -69,7 +69,16 @@ export default function LoginPage() {
               Or continue with
             </span>
           </div>
-          <form action={login} className="space-y-6">
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              const email = formData.get("email") as string;
+              const password = formData.get("password") as string;
+              await signInWithPassword({ email, password });
+            }}
+            className="space-y-6"
+          >
             <div className="space-y-2">
               <Label htmlFor="email" className="text-gray-900">
                 Email
