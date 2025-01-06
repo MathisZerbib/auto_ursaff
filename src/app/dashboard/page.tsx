@@ -236,7 +236,7 @@ export default function Dashboard() {
             <XAxis dataKey="month" stroke="#000000" />
             <YAxis stroke="#000000" />
             <Tooltip />
-            <Bar dataKey="amount" fill="url(#colorUv)" />
+            <Bar dataKey="amount" fill="url(#colorUv)" name={"Revenus"} />
           </BarChart>
         </ResponsiveContainer>
       </div>
